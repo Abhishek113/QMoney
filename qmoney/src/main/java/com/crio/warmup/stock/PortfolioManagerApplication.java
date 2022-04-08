@@ -1,7 +1,5 @@
 
 package com.crio.warmup.stock;
-
-
 import com.crio.warmup.stock.dto.*;
 import com.crio.warmup.stock.log.UncaughtExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,20 +7,21 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
+// import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
+// import java.time.LocalDate;
+// import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+// import java.util.Collections;
+// import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+// import java.util.stream.Collectors;
+// import java.util.stream.Stream;
 import org.apache.logging.log4j.ThreadContext;
-import org.springframework.web.client.RestTemplate;
+// import org.springframework.web.client.RestTemplate;
 
 
 public class PortfolioManagerApplication {
@@ -46,7 +45,25 @@ public class PortfolioManagerApplication {
 
   public static List<String> mainReadFile(String[] args) throws IOException, URISyntaxException {
 
-     return Collections.emptyList();
+    // String filePath = "src/main/resources/" + args[0];
+    //String filePath = args[0];
+    File portfolioTtrades = resolveFileFromResources(args[0]);
+    ObjectMapper objMpr = getObjectMapper();
+    List<String> tradeSymbols = new ArrayList<>();
+    try
+    {
+      PortfolioTrade[] pfTrades = objMpr.readValue(portfolioTtrades, PortfolioTrade[].class);
+
+      for(PortfolioTrade pfTarde:pfTrades)
+      {
+        tradeSymbols.add(pfTarde.getSymbol());
+      }
+    }catch(Exception e)
+    {
+      System.out.println(e.getMessage());
+    }
+
+    return tradeSymbols;
   }
 
 
