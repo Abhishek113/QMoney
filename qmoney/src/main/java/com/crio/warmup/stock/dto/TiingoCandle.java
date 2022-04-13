@@ -2,11 +2,10 @@
 package com.crio.warmup.stock.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.time.LocalDate;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
+public class TiingoCandle implements Candle {
 
   private Double open;
   private Double close;
@@ -57,20 +56,6 @@ public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
 
   public void setDate(LocalDate timeStamp) {
     this.date = timeStamp;
-  }
-
-  @Override
-  public int compareTo(TiingoCandle tCandle) {
-    
-    if(this.close == tCandle.getClose())
-      return 0;
-    
-    else if(this.close < tCandle.getClose())
-      return -1;
-    
-
-      return 1;
-    
   }
 
   @Override
