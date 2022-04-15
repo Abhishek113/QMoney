@@ -52,12 +52,42 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
   //CHECKSTYLE:OFF
 
+  public AnnualizedReturn getAnnualizedReturn(PortfolioTrade portfolioTrade, LocalDate endDate)
+  {
+    AnnualizedReturn annualizedReturn = new AnnualizedReturn("", 0.0, 0.0);
+
+    String symbol = portfolioTrade.getSymbol();
+    LocalDate startDate = portfolioTrade.getPurchaseDate();
+
+    try{
+      List<Candle> tiingoCandles = getStockQuote(symbol, startDate, endDate);
+      Double openingPrice = PortfolioManagerApplication.getOpeningPriceOnStartDate(tiingoCandles);
+      Double closingPrice = PortfolioManagerApplication.getClosingPriceOnEndDate(tiingoCandles);
+
+      annualizedReturn = PortfolioManagerApplication.calculateAnnualizedReturns(endDate, portfolioTrade, openingPrice, closingPrice);
+
+    }catch (JsonProcessingException e){
+        System.out.println(e.getMessage());
+        annualizedReturn = new AnnualizedReturn(symbol, Double.NaN, Double.NaN);
+    }
+    
+
+    return annualizedReturn;
+  }
   public List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> pfTrades, LocalDate endDate) {
       
     List<AnnualizedReturn> annualizedReturns = new ArrayList<>();
-    String token = PortfolioManagerApplication.getToken();
     
-    annualizedReturns = PortfolioManagerApplication.getAnnualizedReturnList(pfTrades, endDate, token);
+    String token = PortfolioManagerApplication.getToken();
+
+    for(PortfolioTrade portfolioTrade: pfTrades)
+    {
+      AnnualizedReturn annualizedReturn = getAnnualizedReturn(portfolioTrade, endDate);
+      annualizedReturns.add(annualizedReturn);
+    }
+    
+    //annualizedReturns = PortfolioManagerApplication.getAnnualizedReturnList(pfTrades, endDate, token);
+    Collections.sort(annualizedReturns);
     return annualizedReturns;
   }
 
@@ -74,13 +104,31 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
 
   public List<Candle> getStockQuote(String symbol, LocalDate from, LocalDate to)
-      throws JsonProcessingException {
-     return null;
+      throws JsonProcessingException, RuntimeException {
+
+        if(from.isAfter(to) || from.equals(to))
+        {
+          throw new RuntimeException();
+        }
+        String url = buildUri(symbol, from, to);
+        RestTemplate restTemplate = new RestTemplate();
+
+        TiingoCandle[] tiingoCandlesArray = restTemplate.getForObject(url, TiingoCandle[].class);
+
+        if(tiingoCandlesArray != null)
+          return Arrays.asList(tiingoCandlesArray);
+
+        return Collections.emptyList();
   }
 
   protected String buildUri(String symbol, LocalDate startDate, LocalDate endDate) {
-      String uriTemplate = "https:api.tiingo.com/tiingo/daily/$SYMBOL/prices?"
+      String uriTemplate = "https://api.tiingo.com/tiingo/daily/$SYMBOL/prices?"
             + "startDate=$STARTDATE&endDate=$ENDDATE&token=$APIKEY";
-      return "";
+      
+      String token = PortfolioManagerApplication.getToken();
+      String url = uriTemplate.replace("$APIKEY", token).replace("$SYMBOL", symbol)
+                              .replace("$STARTDATE", startDate.toString())
+                              .replace("$ENDDATE", endDate.toString());
+      return url;
   }
 }
