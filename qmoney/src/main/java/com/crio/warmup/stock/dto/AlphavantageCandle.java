@@ -1,16 +1,33 @@
-
 package com.crio.warmup.stock.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+// TODO: CRIO_TASK_MODULE_ADDITIONAL_REFACTOR
+//  Implement the Candle interface in such a way that it matches the parameters returned
+//  inside Json response from Alphavantage service.
+
+  //Reference - https:www.baeldung.com/jackson-ignore-properties-on-serialization
+  //Reference - https:www.baeldung.com/jackson-name-of-property
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
+public class AlphavantageCandle implements Candle {
 
+  @JsonProperty("1. open")
   private Double open;
-  private Double close;
+
+  @JsonProperty("2. high")
   private Double high;
+
+  @JsonProperty("3. low")
   private Double low;
+  
+  @JsonProperty("4. close")
+  private Double close;
+
   private LocalDate date;
 
   @Override
@@ -51,7 +68,7 @@ public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
 
   @Override
   public LocalDate getDate() {
-    return date;
+    return this.date;
   }
 
   public void setDate(LocalDate timeStamp) {
@@ -60,7 +77,7 @@ public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
 
   @Override
   public String toString() {
-    return "TiingoCandle{"
+    return "AlphavantageCandle{"
             + "open=" + open
             + ", close=" + close
             + ", high=" + high
@@ -69,14 +86,7 @@ public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
             + '}';
   }
 
-  @Override
-  public int compareTo(TiingoCandle tiingoCandle) {
 
-    if(this.getDate().isBefore(tiingoCandle.getDate()))
-      return -1;
-    else if(this.getDate().isAfter(tiingoCandle.getDate()))
-      return 1;
-      
-    return 0;
-  }
+
 }
+
