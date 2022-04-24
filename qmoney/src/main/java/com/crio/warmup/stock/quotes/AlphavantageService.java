@@ -69,20 +69,24 @@ public class AlphavantageService implements StockQuotesService {
   private static List<Candle> getAlphaventageCandleInStartAndEndDate(HashMap<LocalDate, AlphavantageCandle> alphavantageCandlesMap, LocalDate from, LocalDate to)
   {
       List<Candle> alphavaCandles = new ArrayList<>();
-      for(HashMap.Entry<LocalDate, AlphavantageCandle> candle: alphavantageCandlesMap.entrySet())
+      if(alphavantageCandlesMap != null)
       {
-          LocalDate currCandleDate = candle.getKey();
-          
-          if(isValidDate(currCandleDate, from, to))
-          {
-              AlphavantageCandle currAlphavantageCandle = candle.getValue();
-              if(currAlphavantageCandle != null)
-              {
-                currAlphavantageCandle.setDate(currCandleDate);
-                alphavaCandles.add(currAlphavantageCandle);
-              }
-          }
+        for(HashMap.Entry<LocalDate, AlphavantageCandle> candle: alphavantageCandlesMap.entrySet())
+        {
+            LocalDate currCandleDate = candle.getKey();
+            
+            if(isValidDate(currCandleDate, from, to))
+            {
+                AlphavantageCandle currAlphavantageCandle = candle.getValue();
+                if(currAlphavantageCandle != null)
+                {
+                  currAlphavantageCandle.setDate(currCandleDate);
+                  alphavaCandles.add(currAlphavantageCandle);
+                }
+            }
+        }
       }
+      
       return alphavaCandles;
   }
 
@@ -110,6 +114,7 @@ public class AlphavantageService implements StockQuotesService {
       // return alphavantageCandles;
       String url = buildAlphavantageUrl(symbol);
       String apiResponse = restTemplate.getForObject(url, String.class);
+      System.out.println(apiResponse);
       ObjectMapper objectMapper = new ObjectMapper();
       objectMapper.registerModule(new JavaTimeModule());
       HashMap<LocalDate, AlphavantageCandle> alphavantageCandlesMap = (HashMap<LocalDate, AlphavantageCandle>) objectMapper

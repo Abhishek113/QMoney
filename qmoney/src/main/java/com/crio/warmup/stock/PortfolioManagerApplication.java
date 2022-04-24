@@ -227,7 +227,8 @@ public class PortfolioManagerApplication {
 
       if(candles != null)
       {
-        return candles.get(0).getOpen();
+        if(candles.size() > 0)
+          return candles.get(0).getOpen();
       }
       return 0.0;
   }
@@ -237,7 +238,8 @@ public class PortfolioManagerApplication {
 
       if(candles != null)
       {
-        return candles.get(candles.size()-1).getClose();
+        if(candles.size() > 0)
+          return candles.get(candles.size()-1).getClose();
       }
       return 0.0;
   }
