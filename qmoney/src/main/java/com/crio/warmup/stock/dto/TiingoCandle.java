@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
+public class TiingoCandle implements Candle {
 
   private Double open;
   private Double close;
@@ -67,16 +67,5 @@ public class TiingoCandle implements Candle, Comparable<TiingoCandle> {
             + ", low=" + low
             + ", date=" + date
             + '}';
-  }
-
-  @Override
-  public int compareTo(TiingoCandle tiingoCandle) {
-
-    if(this.getDate().isBefore(tiingoCandle.getDate()))
-      return -1;
-    else if(this.getDate().isAfter(tiingoCandle.getDate()))
-      return 1;
-      
-    return 0;
   }
 }

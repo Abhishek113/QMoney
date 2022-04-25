@@ -3,6 +3,7 @@ package com.crio.warmup.stock.quotes;
 
 import com.crio.warmup.stock.dto.Candle;
 import com.crio.warmup.stock.dto.TiingoCandle;
+import com.crio.warmup.stock.exception.StockQuoteServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -10,6 +11,8 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+
+
 import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 
@@ -36,7 +39,7 @@ public class TiingoService implements StockQuotesService {
 
 
   public List<Candle> getStockQuote(String symbol, LocalDate from, LocalDate to) 
-  throws JsonProcessingException, RuntimeException {
+  throws JsonProcessingException, RuntimeException, StockQuoteServiceException {
 
     if(from.isAfter(to) || from.equals(to))
     {
@@ -57,12 +60,27 @@ public class TiingoService implements StockQuotesService {
     // return Collections.emptyList();
 
     String url = buildTiingoUrl(symbol,from,to);
-    String response = restTemplate.getForObject(url, String.class);
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-    Candle[] obj = objectMapper.readValue(response, TiingoCandle[].class);
-    if(obj==null) return new ArrayList<>();
-    else return Arrays.asList(obj);
+    try{
+        String response = restTemplate.getForObject(url, String.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        Candle[] obj = objectMapper.readValue(response, TiingoCandle[].class);
+
+        if(response == null || obj == null)
+            throw new StockQuoteServiceException("");
+        // if(obj==null) return new ArrayList<>();
+        // else return Arrays.asList(obj);
+        if(obj != null) return Arrays.asList(obj);
+    }catch(StockQuoteServiceException e)
+    {
+        throw new StockQuoteServiceException("");
+    }
+    catch(RuntimeException e)
+    {
+        throw new RuntimeException("");
+    }
+
+    return new ArrayList<>();
   }
 
 

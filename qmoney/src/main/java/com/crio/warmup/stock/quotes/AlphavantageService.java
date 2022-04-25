@@ -7,6 +7,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 import com.crio.warmup.stock.dto.AlphavantageDailyResponse;
 import com.crio.warmup.stock.dto.AlphavantageCandle;
 import com.crio.warmup.stock.dto.Candle;
+import com.crio.warmup.stock.exception.StockQuoteServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -91,7 +92,7 @@ public class AlphavantageService implements StockQuotesService {
   }
 
 
-  public List<Candle> getStockQuote(String symbol, LocalDate from, LocalDate to) throws JsonProcessingException, RuntimeException
+  public List<Candle> getStockQuote(String symbol, LocalDate from, LocalDate to) throws JsonProcessingException, RuntimeException, StockQuoteServiceException
   {
       // if(from.isAfter(to) || from.equals(to))
       // {
@@ -113,28 +114,40 @@ public class AlphavantageService implements StockQuotesService {
 
       // return alphavantageCandles;
       String url = buildAlphavantageUrl(symbol);
-      String apiResponse = restTemplate.getForObject(url, String.class);
-      System.out.println(apiResponse);
-      ObjectMapper objectMapper = new ObjectMapper();
-      objectMapper.registerModule(new JavaTimeModule());
-      HashMap<LocalDate, AlphavantageCandle> alphavantageCandlesMap = (HashMap<LocalDate, AlphavantageCandle>) objectMapper
-          .readValue(apiResponse, AlphavantageDailyResponse.class).getCandles();
-      // if(obj==null) return new ArrayList<>();
-      // List<Candle> res = new ArrayList<>();
-      // for(LocalDate date = from;!date.isAfter(to);date = date.plusDays(1)){
-      //   AlphavantageCandle candle = obj.get(date);
-      //   if(candle!=null){
-      //     candle.setDate(date);
-      //     res.add(candle);
-      //   }
-      // }
-      // return res;
-      List<Candle> alphavantageCandles = getAlphaventageCandleInStartAndEndDate(alphavantageCandlesMap, from, to);
-      
-      if(alphavantageCandles.size() > 0)
-        Collections.reverse(alphavantageCandles);
+      try{
 
-      return alphavantageCandles;
+          String apiResponse = restTemplate.getForObject(url, String.class);
+          System.out.println(apiResponse);
+          ObjectMapper objectMapper = new ObjectMapper();
+          objectMapper.registerModule(new JavaTimeModule());
+          HashMap<LocalDate, AlphavantageCandle> alphavantageCandlesMap = (HashMap<LocalDate, AlphavantageCandle>) objectMapper
+              .readValue(apiResponse, AlphavantageDailyResponse.class).getCandles();
+          // if(obj==null) return new ArrayList<>();
+          // List<Candle> res = new ArrayList<>();
+          // for(LocalDate date = from;!date.isAfter(to);date = date.plusDays(1)){
+          //   AlphavantageCandle candle = obj.get(date);
+          //   if(candle!=null){
+          //     candle.setDate(date);
+          //     res.add(candle);
+          //   }
+          // }
+          // return res;
+          if(apiResponse == null || alphavantageCandlesMap == null)
+            throw new StockQuoteServiceException("");
+          List<Candle> alphavantageCandles = getAlphaventageCandleInStartAndEndDate(alphavantageCandlesMap, from, to);
+          
+          if(alphavantageCandles.size() > 0)
+            Collections.reverse(alphavantageCandles);
+
+          return alphavantageCandles;
+
+      }catch (StockQuoteServiceException e)
+      {
+          throw new StockQuoteServiceException("");
+      }catch (RuntimeException e)
+      {
+          throw new RuntimeException("");
+      }
   }
     //CHECKSTYLE:ON
   // TODO: CRIO_TASK_MODULE_ADDITIONAL_REFACTOR
