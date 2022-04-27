@@ -25,7 +25,7 @@ public class TiingoService implements StockQuotesService {
   }
 
   protected static String getToken() {
-    return "0ccc9038af0400021bddb87cb6cc5c5dd8013ba1";
+    return "088fb67c203dc236a124f65dfff1e513a6285658";
   }
 
 
