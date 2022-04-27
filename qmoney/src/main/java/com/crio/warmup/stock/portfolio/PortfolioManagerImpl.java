@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,6 +35,25 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
   private RestTemplate restTemplate;
   private StockQuotesService stockQuotesService;
+
+  private class AnnualizedReturnCalculator implements Callable<AnnualizedReturn>
+  {
+      private PortfolioTrade portfolioTrade;
+      private LocalDate endDate;
+      private int numberOfThreads = Runtime.getRuntime().availableProcessors()/2;
+
+      public AnnualizedReturnCalculator(PortfolioTrade portfolioTrade, LocalDate endDate) {
+          this.portfolioTrade = portfolioTrade;
+          this.endDate = endDate;
+      }
+
+      @Override
+      public AnnualizedReturn call() throws Exception {
+        // TODO Auto-generated method stub
+        //Thread.sleep(500);
+        return getAnnualizedReturn(portfolioTrade, endDate);
+      }
+  }
 
   // Caution: Do not delete or modify the constructor, or else your build will break!
   // This is absolutely necessary for backward compatibility
@@ -66,7 +86,8 @@ public class PortfolioManagerImpl implements PortfolioManager {
 
   //CHECKSTYLE:OFF
 
-  public AnnualizedReturn getAnnualizedReturn(PortfolioTrade portfolioTrade, LocalDate endDate)
+  public AnnualizedReturn getAnnualizedReturn(PortfolioTrade portfolioTrade, LocalDate endDate) throws
+  StockQuoteServiceException
   {
     AnnualizedReturn annualizedReturn = new AnnualizedReturn("", 0.0, 0.0);
 
@@ -83,16 +104,18 @@ public class PortfolioManagerImpl implements PortfolioManager {
     }catch (JsonProcessingException e){
         System.out.println(e.getMessage());
         annualizedReturn = new AnnualizedReturn(symbol, Double.NaN, Double.NaN);
-    }catch (StockQuoteServiceException e)
-    {
-        System.out.println(e.getMessage());
-        annualizedReturn = new AnnualizedReturn(symbol, Double.NaN, Double.NaN);
     }
+    // catch (StockQuoteServiceException e)
+    // {
+    //     System.out.println(e.getMessage());
+    //     annualizedReturn = new AnnualizedReturn(symbol, Double.NaN, Double.NaN);
+    // }
     
 
     return annualizedReturn;
   }
-  public List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> pfTrades, LocalDate endDate) {
+  public List<AnnualizedReturn> calculateAnnualizedReturn(List<PortfolioTrade> pfTrades, LocalDate endDate) throws
+  StockQuoteServiceException{
       
     List<AnnualizedReturn> annualizedReturns = new ArrayList<>();
     
@@ -109,6 +132,37 @@ public class PortfolioManagerImpl implements PortfolioManager {
     return annualizedReturns;
   }
 
+  public List<AnnualizedReturn> calculateAnnualizedReturnParallel(List<PortfolioTrade> portfolioTrades, LocalDate endDate, int numThreads)throws InterruptedException,
+  StockQuoteServiceException
+  {
+      List<AnnualizedReturn> annualizedReturns = new ArrayList<>();
+
+      ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+
+      List<Future<AnnualizedReturn>> futuresList = new ArrayList<>();
+
+      for(PortfolioTrade portfolioTrade: portfolioTrades)
+      { 
+          Future<AnnualizedReturn> future = executorService.submit(new AnnualizedReturnCalculator(portfolioTrade, endDate));
+          futuresList.add(future);
+      }
+
+      for(Future<AnnualizedReturn> future: futuresList){
+
+          try
+          {
+              annualizedReturns.add(future.get());
+          }catch(InterruptedException | ExecutionException e)
+          {
+              e.printStackTrace();
+              throw new StockQuoteServiceException("");
+          }
+      } 
+
+      executorService.shutdown();
+      Collections.sort(annualizedReturns);
+      return annualizedReturns;
+  }
 
   private Comparator<AnnualizedReturn> getComparator() {
     return Comparator.comparing(AnnualizedReturn::getAnnualizedReturn).reversed();
